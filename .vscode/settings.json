@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "BMGVR-Game Assignment.sln"
+    "dotnet.defaultSolution": "BMGVR-Assignment.sln"
 }
