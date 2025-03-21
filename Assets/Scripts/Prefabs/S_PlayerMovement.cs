@@ -8,13 +8,22 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float mouseSensitivity = 2f;
     [SerializeField] private float smoothTime = 0.1f;
     [SerializeField] private Camera playerCamera;
-
+    
+    [Header("Head Bob Settings")]
+    [SerializeField] private float walkBobSpeed = 14f;
+    [SerializeField] private float walkBobAmount = 0.05f;
+    [SerializeField] private float sprintBobSpeed = 18f;
+    [SerializeField] private float sprintBobAmount = 0.1f;
+    
     private CharacterController controller;
     private float verticalRotation = 0f;
     private Vector3 currentMovement;
     private Vector3 movementSmoothVelocity;
     private float currentSpeed;
-
+    
+    private float defaultYPos = 0;
+    private float timer;
+    
     private void Start()
     {
         controller = GetComponent<CharacterController>();
@@ -23,15 +32,17 @@ public class PlayerMovement : MonoBehaviour
         Cursor.visible = false;
         
         currentSpeed = walkSpeed;
+        defaultYPos = playerCamera.transform.localPosition.y;
     }
-
+    
     private void Update()
     {
         HandleMouseLook();
         HandleMovement();
         HandleSprint();
+        HandleHeadBob();
     }
-
+    
     private void HandleMouseLook()
     {
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
@@ -43,7 +54,7 @@ public class PlayerMovement : MonoBehaviour
         verticalRotation = Mathf.Clamp(verticalRotation, -90f, 90f);
         playerCamera.transform.localRotation = Quaternion.Euler(verticalRotation, 0f, 0f);
     }
-
+    
     private void HandleMovement()
     {
         float horizontal = Input.GetAxis("Horizontal");
@@ -61,7 +72,7 @@ public class PlayerMovement : MonoBehaviour
         
         controller.Move(currentMovement * Time.deltaTime);
     }
-
+    
     private void HandleSprint()
     {
         if (Input.GetKey(KeyCode.LeftShift))
@@ -71,6 +82,31 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             currentSpeed = walkSpeed;
+        }
+    }
+    
+    private void HandleHeadBob()
+    {
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
+        
+        if (Mathf.Abs(horizontal) > 0.1f || Mathf.Abs(vertical) > 0.1f)
+        {
+            float bobSpeed = currentSpeed == sprintSpeed ? sprintBobSpeed : walkBobSpeed;
+            float bobAmount = currentSpeed == sprintSpeed ? sprintBobAmount : walkBobAmount;
+            
+            timer += Time.deltaTime * bobSpeed;
+            Vector3 camPos = playerCamera.transform.localPosition;
+            
+            float newY = defaultYPos + Mathf.Sin(timer) * bobAmount;
+            playerCamera.transform.localPosition = new Vector3(camPos.x, newY, camPos.z);
+        }
+        else
+        {
+            timer = 0;
+            Vector3 camPos = playerCamera.transform.localPosition;
+            float newY = Mathf.Lerp(camPos.y, defaultYPos, Time.deltaTime * 5f);
+            playerCamera.transform.localPosition = new Vector3(camPos.x, newY, camPos.z);
         }
     }
 }
